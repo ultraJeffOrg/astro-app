@@ -1,0 +1,23 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: astro-app
+  description: An Astro JS static site deployed on OpenShift
+  annotations:
+    backstage.io/source-location: url:https://github.com/ultraJeffOrg/astro-app
+    backstage.io/kubernetes-id: astro-app
+    janus-idp.io/tekton: astro-app
+    argocd/app-selector: app.kubernetes.io/instance=astro-app
+  links:
+    - url: https://devspaces.apps.tallgeese.ultra.lab/#https://github.com/ultraJeffOrg/astro-app
+      title: Open in Dev Spaces
+      icon: catalog
+      type: ide
+  tags:
+    - astro
+    - javascript
+    - frontend
+spec:
+  type: service
+  owner: user:default/admin
+  lifecycle: experimental

@@ -1,0 +1,4 @@
+{
+  "name": "astro-app",
+  "description": "An Astro JS static site deployed on OpenShift"
+}
