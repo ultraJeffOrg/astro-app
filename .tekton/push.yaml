@@ -5,7 +5,6 @@ metadata:
   annotations:
     pipelinesascode.tekton.dev/on-event: "[push]"
     pipelinesascode.tekton.dev/on-target-branch: "[main]"
-    pipelinesascode.tekton.dev/task: "[git-clone]"
   labels:
     app.kubernetes.io/instance: astro-app
     backstage.io/kubernetes-id: astro-app
