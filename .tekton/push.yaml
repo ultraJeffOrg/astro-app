@@ -16,12 +16,16 @@ spec:
         type: string
       - name: revision
         type: string
-      - name: image
+      - name: image-base
         type: string
-        default: quay.io/jefrankl/astro-app:latest
+        default: quay.io/jefrankl/astro-app
+      - name: gitops-repo
+        type: string
+        default: https://github.com/ultraJeffOrg/astro-app-gitops.git
     workspaces:
       - name: source
       - name: dockerconfig
+      - name: git-auth
     tasks:
       - name: clone
         taskRef:
@@ -34,6 +38,8 @@ spec:
         workspaces:
           - name: output
             workspace: source
+          - name: basic-auth
+            workspace: git-auth
       - name: build-app
         runAfter: [clone]
         taskSpec:
@@ -42,7 +48,7 @@ spec:
           workspaces:
             - name: source
           steps:
-            - name: npm-install
+            - name: npm-build
               computeResources: {}
               image: registry.access.redhat.com/ubi9/nodejs-22:latest
               workingDir: $(workspaces.source.path)
@@ -58,12 +64,50 @@ spec:
           name: buildah
         params:
           - name: IMAGE
-            value: $(params.image)
+            value: $(params.image-base):$(params.revision)
         workspaces:
           - name: source
             workspace: source
           - name: dockerconfig
             workspace: dockerconfig
+      - name: update-gitops
+        runAfter: [build-image]
+        taskSpec:
+          metadata: {}
+          spec: null
+          params:
+            - name: image
+              type: string
+            - name: gitops-repo
+              type: string
+          workspaces:
+            - name: git-auth
+          steps:
+            - name: update-deployment
+              computeResources: {}
+              image: registry.access.redhat.com/ubi9/toolbox:latest
+              script: |
+                dnf install -y git -q
+                cp /workspace/git-auth/.gitconfig ~/
+                cp /workspace/git-auth/.git-credentials ~/
+                git config --global credential.helper store
+                git clone $(params.gitops-repo) /tmp/gitops
+                cd /tmp/gitops
+                sed -i "s|image: .*astro-app.*|image: $(params.image)|" k8s/base/deployment.yaml
+                git config user.email "pipeline@tallgeese.ultra.lab"
+                git config user.name "Tekton Pipeline"
+                git add -A
+                git diff --cached --quiet && echo "No changes" && exit 0
+                git commit -m "Update astro-app image to $(params.image)"
+                git push
+        params:
+          - name: image
+            value: $(params.image-base):$(params.revision)
+          - name: gitops-repo
+            value: $(params.gitops-repo)
+        workspaces:
+          - name: git-auth
+            workspace: git-auth
   params:
     - name: repo-url
       value: "{{ repo_url }}"
@@ -81,3 +125,6 @@ spec:
     - name: dockerconfig
       secret:
         secretName: quay-push-credentials
+    - name: git-auth
+      secret:
+        secretName: "{{ git_auth_secret }}"
