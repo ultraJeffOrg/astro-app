@@ -9,6 +9,7 @@ metadata:
     backstage.io/kubernetes-namespace: astro-app
     janus-idp.io/tekton: astro-app
     argocd/app-selector: app.kubernetes.io/instance=astro-app
+    quay.io/repository-slug: jefrankl/astro-app
   links:
     - url: https://devspaces.apps.tallgeese.ultra.lab/#https://github.com/ultraJeffOrg/astro-app
       title: Open in Dev Spaces
