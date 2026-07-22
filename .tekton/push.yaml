@@ -5,6 +5,7 @@ metadata:
   annotations:
     pipelinesascode.tekton.dev/on-event: "[push]"
     pipelinesascode.tekton.dev/on-target-branch: "[main]"
+    pipelinesascode.tekton.dev/task: "[git-clone, buildah]"
   labels:
     app.kubernetes.io/instance: astro-app
     backstage.io/kubernetes-id: astro-app
@@ -15,8 +16,12 @@ spec:
         type: string
       - name: revision
         type: string
+      - name: image
+        type: string
+        default: quay.io/jefrankl/astro-app:latest
     workspaces:
       - name: source
+      - name: dockerconfig
     tasks:
       - name: clone
         taskRef:
@@ -47,6 +52,18 @@ spec:
         workspaces:
           - name: source
             workspace: source
+      - name: build-image
+        runAfter: [build-app]
+        taskRef:
+          name: buildah
+        params:
+          - name: IMAGE
+            value: $(params.image)
+        workspaces:
+          - name: source
+            workspace: source
+          - name: dockerconfig
+            workspace: dockerconfig
   params:
     - name: repo-url
       value: "{{ repo_url }}"
@@ -61,3 +78,6 @@ spec:
           resources:
             requests:
               storage: 1Gi
+    - name: dockerconfig
+      secret:
+        secretName: quay-push-credentials
