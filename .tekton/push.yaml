@@ -125,6 +125,9 @@ spec:
     - name: dockerconfig
       secret:
         secretName: quay-push-credentials
+        items:
+          - key: .dockerconfigjson
+            path: config.json
     - name: git-auth
       secret:
         secretName: "{{ git_auth_secret }}"
